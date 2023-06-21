@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Tildezy
 // @namespace     https://github.com/TeJayH/Tildezy/
-// @version       1.0
+// @version       1.1
 // @description   Adds some extra functionality to http://tildes.net/
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
@@ -57,7 +57,7 @@ function getConsistentColor(username) {
     // Calculate a hash value of the username
     for (let i = 0; i < username.length; i++) {
         hash = username.charCodeAt(i) + ((hash << 5) - hash);
-        hash ^= 0xFFAAAA;
+        hash ^= 0xFFFFAA;
         hash |= 0;
     }
 
@@ -77,7 +77,7 @@ function getConsistentColor(username) {
     //Adjust the values however you want, if you make the possible range too small you may near infinite loop while it tries over and over to generate colors for people
     const brightnessThreshold = 200;
     const darknessThreshold = 50;
-    if (brightness > brightnessThreshold || darkness < darknessThreshold) {
+    if (brightness > brightnessThreshold || darkness < darknessThreshold || brightness < darknessThreshold) {
         // Append an underscore to the username and recursively call the function again to generate a fresh color
         username += '_';
         return getConsistentColor(username);
