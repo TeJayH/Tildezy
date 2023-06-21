@@ -238,20 +238,24 @@ function rearrangeGroupLinks() {
     }
 }
 
+
 // Function to add clickable stars to the group links
 function addGroupStars() {
     const groupItems = document.querySelectorAll('.nav-item');
     const groups = Array.from(groupItems).map((groupItem) => {
         const groupLink = groupItem.querySelector('.link-group');
-        const groupName = groupLink.getAttribute('href');
-        const isStarred = isGroupStarred(groupName);
-        const starElement = document.createElement('span');
-        starElement.classList.add('star');
-        starElement.textContent = isStarred ? '★' : '☆';
-        starElement.addEventListener('click', handleStarClick);
-        starElement.style.color = isStarred ? 'yellow' : '';
+        if (groupLink) { // Avoids a null when logged in.
+            const groupName = groupLink.getAttribute('href');
+            const isStarred = isGroupStarred(groupName);
+            const starElement = document.createElement('span');
+            starElement.classList.add('star');
+            starElement.style.cursor = 'pointer';
+            starElement.textContent = isStarred ? '★' : '☆';
+            starElement.addEventListener('click', handleStarClick);
+            starElement.style.color = isStarred ? 'yellow' : '';
 
-        groupItem.insertBefore(starElement, groupLink);
+            groupItem.insertBefore(starElement, groupLink);
+        }
     });
 
     // Sort the group list
