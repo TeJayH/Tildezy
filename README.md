@@ -30,6 +30,10 @@ Howdy, this is Tildzy the general perpose userscript that adds features to https
 
 - Allows you to star groups, making them show at the top of the list for ease of access.
 ![Image of groups list with three groups starred moving them to the top of the list.](https://i.imgur.com/SBwtlhH.png)
+### New Comment Traveller
+
+- Allows you to instantly jump between new comments in a thread.
+![Image of new comments section with up and down button.](https://i.imgur.com/wPECN5c.png)
 
 ### Settings
 
