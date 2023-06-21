@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Tildezy
 // @namespace     https://github.com/TeJayH/Tildezy/
-// @version       1.1
+// @version       1.1.1
 // @description   Adds some extra functionality to http://tildes.net/
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
@@ -21,20 +21,20 @@
 
 // ---------------- Toggles ----------------
 // Gets values from storage if they exist, else sets everything to true, enabling all functiosn of script.
-let toggleNewTabComments = GM_getValue('toggleNewTabComments', true);
-let toggleUserColors = GM_getValue('toggleUserColors', true);
-let toggleCommentCollapser = GM_getValue('toggleCommentCollapser', true);
-let toggleScrollToTopButton = GM_getValue('toggleScrollToTopButton', true);
-let toggleGroupStars = GM_getValue('toggleGroupStars', true);
-let toggleSettings = GM_getValue('toggleSettings', true);
+const toggleNewTabComments = GM_getValue('toggleNewTabComments', true);
+const toggleUserColors = GM_getValue('toggleUserColors', true);
+const toggleCommentCollapser = GM_getValue('toggleCommentCollapser', true);
+const toggleScrollToTopButton = GM_getValue('toggleScrollToTopButton', true);
+const toggleGroupStars = GM_getValue('toggleGroupStars', true);
+const toggleSettings = GM_getValue('toggleSettings', true);
 
 /* Manual overrides if you dont want the settings button
-let toggleNewTabComments = true;
-let toggleUserColors = true;
-let toggleCommentCollapser = true;
-let toggleScrollToTopButton = true;
-let toggleGroupStars = true;
-let toggleSettings = true
+const toggleNewTabComments = true;
+const toggleUserColors = true;
+const toggleCommentCollapser = true;
+const toggleScrollToTopButton = true;
+const toggleGroupStars = true;
+const toggleSettings = true
 */
 
 
@@ -312,13 +312,6 @@ function scrollToTop() {
     });
 }
 
-// Function to scroll to the top of the page
-function scrollToTop() {
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-    });
-}
 
 // Function to add a scroll-to-top button to the footer
 function addScrollToTopButton() {
