@@ -25,7 +25,7 @@ Howdy, this is Tildzy the general perpose userscript that adds features to https
 ### Scroll to Top Button
 
 - Adds a button at the bottom of the page which sends you back to the top of the page.
-![Image of a button that says "↑ Return to Top ↑".](https://i.imgur.com/guAVg8n.png)
+![Image of a button that says "↑ Return to Top ↑".](https://i.imgur.com/dPolQ26.png)
 ### Group Stars/Favourites
 
 - Allows you to star groups, making them show at the top of the list for ease of access.
