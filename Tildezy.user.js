@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Tildezy
 // @namespace     https://github.com/TeJayH/Tildezy/
-// @version       1.2.0
+// @version       1.2.1
 // @description   Adds some extra functionality to http://tildes.net/
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
@@ -317,7 +317,11 @@ function addScrollToTopButton (homeButton) {
   homeButton.style.fontSize = '0.6rem'
   homeButton.style.color = 'var(--foreground-secondary-color)'
   homeButton.title = 'Return to Top'
-  btnGroup.appendChild(homeButton)
+  try {
+    btnGroup.appendChild(homeButton)
+  } catch (err) {
+    // No btnGroup
+  }
 }
 
 // ---------------- Settings ----------------
@@ -549,7 +553,11 @@ const btnGroup = document.querySelector('.btn-group')
 // Adds a space between the Expand All button and the custom buttons.
 const blankspan = document.createElement('span')
 blankspan.innerHTML = '&nbsp;'
-btnGroup.appendChild(blankspan)
+try {
+  btnGroup.appendChild(blankspan)
+} catch (err) {
+  // No btnGroup
+}
 
 const observer = new IntersectionObserver((entries) => {
   const entry = entries[0]
@@ -569,9 +577,11 @@ const observer = new IntersectionObserver((entries) => {
     homeButton.style.top = 'auto'
   }
 })
-
-observer.observe(btnGroup)
-
+try {
+  observer.observe(btnGroup)
+} catch (err) {
+  // No btnGroup
+}
 // ---------------- Run the stuff ----------------
 
 if (toggleSettings) { addSettingsButton() } // Yes you can even turn the settings off if you'd rather set the bools manually and leave the header untouched.
