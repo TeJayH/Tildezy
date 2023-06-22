@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Tildezy
 // @namespace     https://github.com/TeJayH/Tildezy/
-// @version       1.2.1
+// @version       1.2.2
 // @description   Adds some extra functionality to http://tildes.net/
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
@@ -90,11 +90,10 @@ function applyConsistentColorToUserNames () {
   const userLinks = document.getElementsByClassName('link-user')
   const userMap = {}
 
-  // Group user links by username
   for (let i = 0; i < userLinks.length; i++) {
     const link = userLinks[i]
     const username = link.textContent
-    if (!Object.prototype.hasOwnProperty.call(userMap, username)) {
+    if (!userMap.hasOwnProperty(username)) {
       userMap[username] = []
     }
     userMap[username].push(link)
@@ -102,7 +101,7 @@ function applyConsistentColorToUserNames () {
 
   // Apply consistent color to all instances of each username
   for (const username in userMap) {
-    if (!Object.prototype.hasOwnProperty.call(userMap, username)) {
+    if (userMap.hasOwnProperty(username)) {
       const color = getConsistentColor(username)
       const userInstances = userMap[username]
       for (let i = 0; i < userInstances.length; i++) {
