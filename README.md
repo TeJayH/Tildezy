@@ -34,6 +34,10 @@ Howdy, this is Tildzy the general perpose userscript that adds features to https
 
 - Allows you to instantly jump between new comments in a thread.
 ![Image of new comments section with up and down button.](https://i.imgur.com/wPECN5c.png)
+### New Comment Traveller
+
+- Adds buttons below every comment box to automatically insert various markdown actions. Tildes supports full HTML inside comments, so I've made it easy to insert extra buttons for whatever features you'd want. New buttons can be inserted at line 762
+![Image of new markdown buttons below a comment box.](https://i.imgur.com/jhRBDLo.png)
 
 ### Settings
 

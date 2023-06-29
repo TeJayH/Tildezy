@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Tildezy
 // @namespace     https://github.com/TeJayH/Tildezy/
-// @version       1.2.2
+// @version       1.3.0
 // @description   Adds some extra functionality to http://tildes.net/
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
@@ -18,8 +18,12 @@
 // The script loaders generally show you any changes when you update but it's still technically a little dangerous if you're not going to check each update
 // I don't expect this to get tons of updates so you really do not *need* it.
 
+// ESLint nonsense.
 /* global GM_getValue */
 /* global GM_setValue */
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable no-case-declarations */
+/* eslint-disable eqeqeq */
 
 // ---------------- Toggles ----------------
 // Gets values from storage if they exist, else sets everything to true, enabling all functiosn of script.
@@ -29,6 +33,7 @@ const toggleCommentCollapser = GM_getValue('toggleCommentCollapser', true)
 const toggleScrollToTopButton = GM_getValue('toggleScrollToTopButton', true)
 const toggleGroupStars = GM_getValue('toggleGroupStars', true)
 const toggleCommentTraveller = GM_getValue('toggleCommentTraveller', true)
+const toggleMarkdownButtons = GM_getValue('toggleMarkdownButtons', true)
 const toggleSettings = GM_getValue('toggleSettings', true)
 
 /* Manual overrides if you dont want the settings button
@@ -38,6 +43,7 @@ const toggleCommentCollapser = true;
 const toggleScrollToTopButton = true;
 const toggleGroupStars = true;
 const toggleCommentTraveller = true;
+const toggleMarkdownButtons = true;
 const toggleSettings = true;
 */
 
@@ -384,6 +390,11 @@ function addSettingsButton () {
     setting: 'toggleCommentTraveller',
     label: 'Toggle New Comment Traveller',
     description: 'Allows you to jump between new comments in a page, via two buttons.'
+  },
+  {
+    setting: 'toggleMarkdownButtons',
+    label: 'Toggle Markdown Buttons',
+    description: 'Adds buttons below the comment box to automatically add markdown.'
   }
   ]
 
@@ -529,7 +540,7 @@ function navigateComment (direction) {
   if (!window.currentCommentIndex && window.currentCommentIndex !== 0) {
     window.currentCommentIndex = direction === 'up' ? comments.length - 1 : 0
 
-  // Current comment is set, so subtract or add one based on direction clicked
+    // Current comment is set, so subtract or add one based on direction clicked
   } else {
     window.currentCommentIndex += direction === 'up' ? -1 : 1
   }
@@ -581,6 +592,200 @@ try {
 } catch (err) {
   // No btnGroup
 }
+
+// ---------------- Markdown ----------------
+// Adds markdown buttons below the comment box, no more forgetting which order the brackets go for a link.
+/* The feature is pretty sloppy, adding the markdown to the single comment box at the end of the page was easy but getting it to work on the
+comment boxes that appear when you click reply was much harder, dynamically editing pages is much harder than I expected it to be.
+I'll need to clean this up in the future once I have a fresh set of eyes, right now it probably has some left over snips of code from me trying
+various things to get it working properly.
+*/
+
+class ButtonCreator {
+  constructor (formInputSelector, formButtonContainerSelector) {
+    this.formInputSelector = formInputSelector
+    this.formButtonContainerSelector = formButtonContainerSelector
+    this.newButtonContainer = null
+  }
+
+  addButtonToMenu (buttonText, before, after = '', options = {}) {
+    const formInput = document.querySelector(this.formInputSelector)
+    const newButton = document.createElement('button')
+    const formButtonContainer = document.querySelector(this.formButtonContainerSelector)
+    newButton.setAttribute('type', 'button')
+    newButton.setAttribute('class', 'btn btn-link')
+    newButton.textContent = buttonText
+    newButton.classList.add('btn', 'btn-sm', 'btn-light')
+    newButton.style.border = '1px solid var(--border-color)'
+    newButton.style.color = 'var(--foreground-secondary-color)'
+    newButton.style.flex = '0 0 auto'
+    newButton.style.fontSize = '0.6rem'
+    newButton.style.margin = '0.2em'
+    newButton.style.minWidth = 'fit-content'
+    newButton.addEventListener('click', () => this.buttonClickHandler(formInput, buttonText, before, after, options))
+
+    if (this.newButtonContainer === null) {
+      this.newButtonContainer = document.createElement('div')
+
+      // Create a container for the new buttons if it doesn't exist
+      this.newButtonContainer.id = 'markDownButtons'
+      this.newButtonContainer.style.position = 'relative'
+      this.newButtonContainer.style.top = '-30px' // Nonsense way to have the buttons beside the post button without adding to the same bar as the post button, when added to the post button it got thrown around and was messy in general. Probably better ways to handle this.
+      this.newButtonContainer.style.alignItems = 'center'
+      this.newButtonContainer.style.backgroundColor = 'var(--background-input-color)'
+      this.newButtonContainer.style.border = '1px solid var(--border-color)'
+      this.newButtonContainer.style.display = 'flex'
+      this.newButtonContainer.style.flexWrap = 'wrap'
+      this.newButtonContainer.style.justifyContent = 'center'
+      this.newButtonContainer.style.padding = '4px' // Add gap between items.
+      this.newButtonContainer.style.width = 'calc(100% - 13em)' // Leave space for the Post/Cancel buttons
+
+      formButtonContainer.insertAdjacentElement('afterend', this.newButtonContainer)
+    }
+    // Add the new button to the existing container as a catch
+    this.newButtonContainer.appendChild(newButton)
+  }
+
+  buttonClickHandler (formInput, buttonText, before, after, options) {
+    const selectedText = formInput.value.substring(formInput.selectionStart, formInput.selectionEnd)
+    let textToInsert
+
+    if (options.isLink && this.isInsideBrackets(formInput.value, formInput.selectionEnd)) {
+      alert('A link cannot be nested inside another link')
+      return
+    }
+
+    if (options.requiresUserInput) {
+      textToInsert = this.promptUserForInput(buttonText, options.label, selectedText)
+      if (textToInsert === undefined) return // Cancels if user hits cancel.
+    }
+
+    const markdown = this.generateMarkdown(buttonText, before, after, selectedText, textToInsert)
+    const currentValue = formInput.value
+    formInput.value = currentValue.slice(0, formInput.selectionStart) + markdown + currentValue.slice(formInput.selectionEnd) // If I knew a way to do this while maintaining ctrl+z I would. I tried.
+
+    const newCursorPos = formInput.selectionStart + markdown.length
+    formInput.setSelectionRange(newCursorPos, newCursorPos)
+  }
+
+  isInsideBrackets (text, cursorPos) { // This is entirely nonsense and pointless but I made it work. If I never see a bracket again I'll be happy
+    try {
+      const beforeCursor = text.slice(0, cursorPos)
+      const afterCursor = text.slice(cursorPos)
+      const lastOpenBracketIndex = beforeCursor.lastIndexOf('[')
+      const nextCloseBracketIndex = afterCursor.indexOf(']')
+      const lastCloseBracketIndex = beforeCursor.lastIndexOf(']')
+      const nextOpenParenIndex = text.indexOf('](', lastCloseBracketIndex)
+
+      const isInBrackets = lastOpenBracketIndex != -1 && nextCloseBracketIndex != -1 && nextOpenParenIndex != -1
+      const isInParentheses = lastCloseBracketIndex != -1 && nextOpenParenIndex != -1 && afterCursor.indexOf(')') != -1
+      return isInBrackets || isInParentheses
+    } catch (err) {
+      console.log(err)
+      return false
+    }
+  }
+
+  promptUserForInput (buttonText, label, selectedText) {
+    let userInput
+    let url
+    switch (buttonText) {
+      case 'Link':
+        if (!selectedText) {
+          userInput = prompt(label)
+          if (userInput === null) return
+        }
+        url = prompt('Enter the URL', '')
+        if (url === null) return
+        return { text: userInput, url }
+      default:
+        userInput = prompt(label)
+        if (userInput === null) return
+        return userInput
+    }
+  }
+
+  generateMarkdown (buttonText, before, after, selectedText, textToInsert) {
+    /*
+    before = thing added before your text
+    after = thing added after your text
+    textToInsert = prompted insertion, eg URL for clickable text or language in a codeblock
+    selectedText = current highlighted text or blank if no selection
+    */
+    switch (buttonText) {
+      case 'Code Block':
+        return `${before}${textToInsert}\n${selectedText}${after}`
+      case 'Bullet List':
+        const bulletLines = selectedText.split('\n')
+        const bulletListItems = bulletLines.map((line) => `* ${line}`).join('\n')
+        return `${bulletListItems}${after}`
+      case 'Numbered List':
+        const numberedLines = selectedText.split('\n')
+        const numberedListItems = numberedLines.map((line, index) => `${index + 1}. ${line}`).join('\n')
+        return `${numberedListItems}${after}`
+      case 'Expandable':
+        return `${before}${selectedText || '[SummaryHere]'}${after}`
+      case 'Horizontal Rule':
+        return `${before}${after}`
+      case 'Link':
+        const linkText = textToInsert.text || selectedText
+        return `${before}${linkText}${after}${textToInsert.url})`
+      default:
+        if (!selectedText) { selectedText = ' ' } // Puts a space between things like the bold's ** when there's no text selected (so ** ** instead of ****)
+        return `${before}${selectedText}${after}`
+    }
+  }
+}
+
+function markdownButtons () {
+  const checkExist = setInterval(() => { // Full of messy nonsense as I tried to add the buttons to new comment boxes when reply is clicked without making duplicates. Can still sometimes break if you spam reply > cancel. If you don't do that it doesn't count as a bug though ;)
+    const newFormButtons = document.querySelectorAll('.form-buttons:not(.markdown-buttons-added)')
+    if (newFormButtons.length) {
+      newFormButtons.forEach((newFormButton, index) => {
+        if (!newFormButton.querySelector('#markDownButtons')) {
+          newFormButton.classList.add('markdown-buttons-added') // Add identifier class
+          const uniqueId = `form-buttons-${Date.now()}-${index}` // Add unique id
+          newFormButton.id = uniqueId
+          try {
+            const buttonCreator = new ButtonCreator('.form-input', `#${uniqueId}`)
+            buttonCreator.addButtonToMenu('Bold', '**', '**')
+            buttonCreator.addButtonToMenu('Italic', '*', '*')
+            buttonCreator.addButtonToMenu('Strikethrough', '~~', '~~')
+            buttonCreator.addButtonToMenu('Inline Code', '`', '`')
+            buttonCreator.addButtonToMenu('Code Block', '```', '\n```', { requiresUserInput: true, label: 'Enter language for syntax highlighting (optional):\nPopular languages: javascript, python, java, csharp, cpp, go, rust, php, swift, kotlin, ruby, shell, html, css, sql:' })
+            buttonCreator.addButtonToMenu('Bullet List', '* ', '')
+            buttonCreator.addButtonToMenu('Numbered List', '', '')
+            buttonCreator.addButtonToMenu('Quote', '> ', '')
+            buttonCreator.addButtonToMenu('Horizontal Rule', '---')
+            buttonCreator.addButtonToMenu('Small', '<small>', '</small>')
+            buttonCreator.addButtonToMenu('Expandable', '<details>\n<summary>', '</summary>\n[DetailedDescriptionHere]\n</details>')
+            buttonCreator.addButtonToMenu('Link', '[', '](', { isLink: true, requiresUserInput: true, label: 'Text to make URL:' })
+            // Can add more here with the format of Button text, thing that goes before text, thing that goes after text. Tildes supports full HTML so you can technically tons and tons of buttons just making the before and after opening and closing HTML. Use Small as an example.
+          } catch (err) {
+            // Log error details
+            console.error(err)
+          }
+        }
+      })
+      clearInterval(checkExist)
+    }
+  }, 100)
+}
+
+function addButtonClickListeners () {
+  const buttons = document.querySelectorAll('.btn-post-action[name="reply"]')
+  if (buttons.length > 0) {
+    buttons.forEach((button) => {
+      button.addEventListener('click', markdownButtons())
+    })
+  }
+}
+
+function runMarkDown () {
+  window.addEventListener('load', addButtonClickListeners) // Gens the markdown buttons for all future comment boxes (The ones that show up when you click reply)
+  markdownButtons() // Gens the markdown buttons for the base comment box (Bottom of the page)
+}
+
 // ---------------- Run the stuff ----------------
 
 if (toggleSettings) { addSettingsButton() } // Yes you can even turn the settings off if you'd rather set the bools manually and leave the header untouched.
@@ -588,3 +793,4 @@ if (toggleCommentTraveller) { newCommentTraveller(backgroundDiv) }
 if (toggleScrollToTopButton) { addScrollToTopButton(homeButton) }
 if (toggleUserColors) { applyConsistentColorToUserNames() }
 if (toggleGroupStars) { addGroupStars() }
+if (toggleMarkdownButtons) { runMarkDown() }
