@@ -6,7 +6,7 @@
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
 // @icon          https://www.google.com/s2/favicons?sz=64&domain=tildes.net
-// @supportURL    https://github.com/TeJayH/Tildezy/issues◘
+// @supportURL    https://github.com/TeJayH/Tildezy/issues
 // @license       GPL-3.0
 // @grant         GM_registerMenuCommand
 // @grant         GM_setValue
