@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          Tildezy
 // @namespace     https://github.com/TeJayH/Tildezy/
-// @version       1.3.0
+// @version       1.3.1
 // @description   Adds some extra functionality to http://tildes.net/
 // @author        TeJay (https://github.com/TeJayH)
 // @match         *://*.tildes.net/*
@@ -782,6 +782,9 @@ function addButtonClickListeners () {
 }
 
 function runMarkDown () {
+  if (window.location.href.includes("tildes.net/login")){
+    return
+  }
   window.addEventListener('load', addButtonClickListeners) // Gens the markdown buttons for all future comment boxes (The ones that show up when you click reply)
   markdownButtons() // Gens the markdown buttons for the base comment box (Bottom of the page)
 }
